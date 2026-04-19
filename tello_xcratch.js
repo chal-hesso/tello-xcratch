@@ -1,38 +1,36 @@
-class TelloExpert {
-    getInfo() {
-        return {
-            id: 'telloExpert',
-            name: 'Tello Control',
-            blocks: [
-                { opcode: 'takeoff', blockType: 'command', text: '離陸' },
-                { opcode: 'land', blockType: 'command', text: '着陸' },
-                { opcode: 'move', blockType: 'command', text: '[dir]へ [dist]cm進む',
-                  arguments: {
-                    dir: { type: 'string', menu: 'direction', defaultValue: 'forward' },
-                    dist: { type: 'number', defaultValue: 20 }
-                  }
-                },
-                { opcode: 'rotate', blockType: 'command', text: '[rotDir]へ [angle]度回転',
-                  arguments: {
-                    rotDir: { type: 'string', menu: 'rotation', defaultValue: 'cw' },
-                    angle: { type: 'number', defaultValue: 90 }
-                  }
-                },
-                { opcode: 'flip', blockType: 'command', text: '[flipDir]へ宙返り',
-                  arguments: { flipDir: { type: 'string', menu: 'flipMenu', defaultValue: 'f' } }
-                }
-            ],
-            menus: {
-                direction: { items: [{text:'前',value:'forward'},{text:'後',value:'back'},{text:'左',value:'left'},{text:'右',value:'right'}] },
-                rotation: { items: [{text:'右(時計回り)',value:'cw'},{text:'左(反時計)',value:'ccw'}] },
-                flipMenu: { items: [{text:'前',value:'f'},{text:'後',value:'b'},{text:'左',value:'l'},{text:'右',value:'r'}] }
-            }
-        };
-    }
-    takeoff() { fetch('http://localhost:8001/command').then(() => fetch('http://localhost:8001/takeoff')); }
-    land() { fetch('http://localhost:8001/land'); }
-    move(args) { fetch(`http://localhost:8001/${args.dir} ${args.dist}`); }
-    rotate(args) { fetch(`http://localhost:8001/${args.rotDir} ${args.angle}`); }
-    flip(args) { fetch(`http://localhost:8001/flip ${args.flipDir}`); }
-}
-Scratch.extensions.register(new TelloExpert());
+(function(ext) {
+    // 拡張機能が読み込まれた時の初期化
+    ext._shutdown = function() {};
+    ext._getStatus = function() {
+        return {status: 2, msg: 'Ready'};
+    };
+
+    // 各コマンドの定義
+    ext.takeoff = function() {
+        const url = 'http://127.0.0.1:8001/takeoff'; // localhostではなくIPで指定
+        fetch(url, { mode: 'no-cors' });
+    };
+
+    ext.land = function() {
+        fetch('http://127.0.0.1:8001/land', { mode: 'no-cors' });
+    };
+
+    ext.move = function(dir, dist) {
+        fetch(`http://127.0.0.1:8001/${dir} ${dist}`, { mode: 'no-cors' });
+    };
+
+    // ブロックの定義（Scratch 2.0/Xcratch互換形式）
+    var descriptor = {
+        blocks: [
+            [' ', '離陸', 'takeoff'],
+            [' ', '着陸', 'land'],
+            [' ', '%m.direction へ %n cm進む', 'move', 'forward', 20],
+        ],
+        menus: {
+            direction: ['forward', 'back', 'left', 'right', 'up', 'down']
+        }
+    };
+
+    // 登録
+    ScratchExtensions.register('Tello Expert', descriptor, ext);
+})({});
